@@ -100,13 +100,13 @@ func (r *rom32k) loadProgram(filePath string) {
 }
 
 func (r *rom32k) write(in []bool, address []bool) {
-	a0, a1 := dmux(true, address[14])
-	r.rom0.tick(in, address[:14], a0)
-	r.rom1.tick(in, address[:14], a1)
+	a0, a1 := dmux(true, address[0])
+	r.rom0.tick(in, address[1:], a0)
+	r.rom1.tick(in, address[1:], a1)
 }
 
 func (r *rom32k) read(address []bool) []bool {
-	return muxMulti(r.rom0.read(address[:14]), r.rom1.read(address[:14]), address[14])
+	return muxMulti(r.rom0.read(address[1:]), r.rom1.read(address[1:]), address[0])
 }
 
 func getROM() rom32k {
