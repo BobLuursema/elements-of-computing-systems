@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Hack computer</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css">
+</head>
+
+<body>
+
+  <div id="app">
+
+    <div class="section">
+
+      <h1 class="title">HACK computer</h1>
+
+      <div class="buttons">
+        <button @click="nextTick" class="button">Next tick</button>
+        <button @click="reset" class="button">Reset</button>
+      </div>
+
+      <div class="columns">
+        <div class="column">
+          <div class="box">
+            <h2 class="subtitle">ROM</h2>
+            <table id="rom" class="table">
+              <thead>
+                <tr>
+                  <th>Index</th>
+                  <th>Bits</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(bits, index) in state.rom">
+                  <td>{{ index }}</td>
+                  <td>{{ bits }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box">
+            <h2 class="subtitle">RAM</h2>
+            <table id="ram" class="table">
+              <thead>
+                <tr>
+                  <th>Index</th>
+                  <th>Bits</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(bits, index) in state.ram">
+                  <td>{{ index }}</td>
+                  <td>{{ bits }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="column">
+          <div class="box">
+            <h2 class="subtitle">State</h2>
+            <table id="state" class="table">
+              <tbody>
+                <tr>
+                  <th>PC</th>
+                  <td>{{ state.pc }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    window.app = new Vue({
+      el: '#app',
+      data: {
+        state: {
+          rom: [],
+          ram: [],
+          pc: 0
+        }
+      },
+      created: function () {
+        fetch("/load").then(response => response.json()).then(state => this.state = state)
+      },
+      methods: {
+        nextTick: function () {
+          fetch("/tick").then(response => response.json()).then(state => this.state = state)
+        },
+        reset: function () {
+          fetch("/reset").then(response => response.json()).then(state => this.state = state)
+        },
+      }
+    })
+  </script>
+
+</body>
+
+</html>
