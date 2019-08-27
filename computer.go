@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -19,6 +17,7 @@ instruction
 0123 4567 8901 2345
 111a cccc ccdd djjj
 
+What is the output
 C				a=0  a=1
 101010  0
 111111  1
@@ -39,27 +38,29 @@ C				a=0  a=1
 000000  D&A  D&M
 010101  D|A  D|M
 
-
+Where to store the output
 d1	d2	d3
 A		D		M[A]
 
+Where to jump next
 j1	j2	j3
 <0  =0  >0
 */
-func (c *cpu) tick(instruction []bool, inM []bool, reset bool) {
+func (c *cpu) tick(instruction []bool, inM []bool, reset bool) ([]bool, bool, []bool, []bool) {
 	// Trigger ALU
 	output, isZero, isNegative := alu(c.dRegister.out, muxMulti(c.aRegister.out, inM, instruction[3]), instruction[4], instruction[5], instruction[6], instruction[7], instruction[8], instruction[9])
 	// Store in D register
 	c.dRegister.tick(output, instruction[11])
 	// Store in A register
-	c.aRegister.tick(muxMulti(output, instruction, instruction[0]), instruction[10])
+	c.aRegister.tick(muxMulti(instruction, output, instruction[0]), or(instruction[10], not(instruction[0])))
 	// Check if we need to jump
 	shouldJump1 := and(isNegative, instruction[13])
 	shouldJump2 := and(isZero, instruction[14])
-	shouldJump3 := and(and(not(isNegative), not(isZero)), instruction[12])
-	shouldJump := or(or(shouldJump1, shouldJump2), shouldJump3)
+	shouldJump3 := and(and(not(isNegative), not(isZero)), instruction[15])
+	shouldJump := and(or(or(shouldJump1, shouldJump2), shouldJump3), instruction[0])
 	// Increment program counter, load A register, or reset
 	c.count.tick(c.aRegister.out, true, shouldJump, reset)
+	return output, instruction[12], c.aRegister.out, c.count.read()
 }
 
 type memory struct {
@@ -74,8 +75,8 @@ func (m *memory) read(address []bool) []bool {
 	return m.ram.read(address)
 }
 
-func getMemory() memory {
-	return memory{ram: getRAM16K(16)}
+func getMemory(bits int) memory {
+	return memory{ram: getRAM16K(bits)}
 }
 
 type rom32k struct {
@@ -91,9 +92,7 @@ func (r *rom32k) loadProgram(filePath string) {
 	index := 0
 	for scanner.Scan() {
 		in := scanner.Text()
-		fmt.Println(boolToStr(address))
 		r.write(strToBool(strings.TrimSuffix(in, "\n")), address)
-		dump(r, "z_dump-"+strconv.Itoa(index))
 		address = increment(address)
 		index++
 	}
@@ -109,6 +108,33 @@ func (r *rom32k) read(address []bool) []bool {
 	return muxMulti(r.rom0.read(address[1:]), r.rom1.read(address[1:]), address[0])
 }
 
-func getROM() rom32k {
-	return rom32k{rom0: getRAM16K(16), rom1: getRAM16K(16)}
+func getROM(bits int) rom32k {
+	return rom32k{rom0: getRAM16K(bits), rom1: getRAM16K(bits)}
+}
+
+type computer struct {
+	processor cpu
+	program   rom32k
+	data      memory
+}
+
+func (c *computer) tick(reset bool) {
+	instruction := c.program.read(c.processor.count.read())
+	inM := c.data.read(c.processor.aRegister.out)
+	outM, writeM, addressM, _ := c.processor.tick(instruction, inM, reset)
+	c.data.tick(outM, addressM, writeM)
+}
+
+func (c *computer) loadProgram(filePath string) {
+	c.program.loadProgram(filePath)
+}
+
+func getComputer(bits int) computer {
+	return computer{
+		processor: cpu{
+			dRegister: getRegister(bits),
+			aRegister: getRegister(bits),
+			count:     getCounter(bits)},
+		program: getROM(bits),
+		data:    getMemory(bits)}
 }

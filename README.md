@@ -30,3 +30,5 @@ Finally we construct the full computer. This consists of a `CPU` which has a dat
 The CPU triggers the ALU, and depending on the instruction will store the output in the D register and/or A register, and finally increment/reset/load the counter.
 
 The other parts of the computer are the memory struct which is a `ram16k` unit, and a `rom32k` struct in which the program is stored. The `rom32k` unit has a `loadProgram` function which takes a filepath
+
+NEXT STEP: write CPU tests

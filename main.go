@@ -1,6 +1,6 @@
 package main
 
 func main() {
-	rom := getROM()
+	rom := getROM(16)
 	rom.loadProgram("test.hack")
 }
