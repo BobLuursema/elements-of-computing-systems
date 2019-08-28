@@ -32,12 +32,14 @@
                 <tr>
                   <th>Index</th>
                   <th>Bits</th>
+                  <th>Instruction</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(bits, index) in state.rom">
+                <tr v-for="(bits, index) in shortenedROM">
                   <td>{{ index }}</td>
                   <td>{{ bits }}</td>
+                  <td>{{ bits | instruction }}</td>
                 </tr>
               </tbody>
             </table>
@@ -51,12 +53,14 @@
                 <tr>
                   <th>Index</th>
                   <th>Bits</th>
+                  <th>Integer</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(bits, index) in state.ram">
                   <td>{{ index }}</td>
                   <td>{{ bits }}</td>
+                  <td>{{ bits | bitsToInt }}</td>
                 </tr>
               </tbody>
             </table>
@@ -70,6 +74,7 @@
                 <tr>
                   <th>PC</th>
                   <td>{{ state.pc }}</td>
+                  <td>{{ state.pc | bitsToInt }}</td>
                 </tr>
               </tbody>
             </table>
@@ -82,13 +87,101 @@
   </div>
 
   <script>
+    function bitsToInt(bits) {
+      let value = 0
+      let factor = 1
+      for (let i = bits.length - 1; i >= 0; i--) {
+        value = value + parseInt(bits[i]) * factor
+        factor = factor * 2
+      }
+      return value
+    }
+    const instructionMap = {
+      "0101010": "0",
+      "0111111": "1",
+      "0111010": "-1",
+      "0001100": "D",
+      "0110000": "A",
+      "1110000": "M",
+      "0001101": "!D",
+      "0110001": "!A",
+      "1110001": "!M",
+      "0001111": "-D",
+      "0110011": "-A",
+      "1110011": "-M",
+      "0011111": "D+1",
+      "0110111": "A+1",
+      "1110111": "M+1",
+      "0001110": "D-1",
+      "0110010": "A-1",
+      "1110010": "M-1",
+      "0000010": "D+A",
+      "1000010": "D+M",
+      "0010011": "D-A",
+      "1010011": "D-M",
+      "0000111": "A-D",
+      "1000111": "M-D",
+      "0000000": "D&A",
+      "1000000": "D&M",
+      "0010101": "D|A",
+      "1010101": "D|M"
+    }
     window.app = new Vue({
       el: '#app',
       data: {
         state: {
           rom: [],
           ram: [],
-          pc: 0
+          pc: "0000000000000000"
+        }
+      },
+      computed: {
+        shortenedROM: function () {
+          return this.state.rom.filter(value => value !== "0000000000000000")
+        }
+      },
+      filters: {
+        bitsToInt: function (bits) {
+          let value = 0
+          let factor = 1
+          for (let i = bits.length - 1; i >= 0; i--) {
+            value = value + parseInt(bits[i]) * factor
+            factor = factor * 2
+          }
+          return value
+        },
+        instruction: function (bits) {
+          if (bits[0] === "0") {
+            return `Load ${bitsToInt(bits)} in A`
+          }
+          let instruction = instructionMap[bits.substring(3, 10)]
+          let storeIn = ""
+          if (bits[10] === "1") {
+            storeIn = "A"
+          }
+          if (bits[11] === "1") {
+            storeIn = storeIn.length > 0 ? storeIn + ", D" : "D"
+          }
+          if (bits[12] === "1") {
+            storeIn = storeIn.length > 0 ? storeIn + ", M[A]" : "M[A]"
+          }
+          if (storeIn.length > 0) {
+            instruction = `${instruction} store in ${storeIn}`
+          }
+          let jumpIf = ""
+          if (bits[13] === "1") {
+            jumpIf = "<0"
+          }
+          if (bits[14] === "1") {
+            jumpIf = jumpIf.length > 0 ? jumpIf + " or =0" : "=0"
+          }
+          if (bits[15] === "1") {
+            jumpIf = jumpIf.length > 0 ? jumpIf + " or >0" : ">0"
+          }
+          if (jumpIf.length > 0) {
+            instruction = `${instruction} and jump if ${jumpIf}`
+          }
+          return instruction
         }
       },
       created: function () {
