@@ -87,7 +87,18 @@ func dumpROM(rom *rom32k) []string {
 
 func dumpRAM(mem *memory) []string {
 	data := make([]string, 0)
-	for _, r4k := range mem.ram.ram4ks {
+	for _, r4k := range mem.ram0.ram4ks {
+		for _, r512 := range r4k.ram512s {
+			for _, r64 := range r512.ram64s {
+				for _, r8 := range r64.ram8s {
+					for _, r := range r8.registers {
+						data = append(data, boolToStr(r.out))
+					}
+				}
+			}
+		}
+	}
+	for _, r4k := range mem.ram1.ram4ks {
 		for _, r512 := range r4k.ram512s {
 			for _, r64 := range r512.ram64s {
 				for _, r8 := range r64.ram8s {

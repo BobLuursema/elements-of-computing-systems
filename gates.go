@@ -53,7 +53,7 @@ func mux(input1 bool, input2 bool, sel bool) bool {
 // Sends the input to output 1 or output 2 based on the 1 bit selector
 func dmux(input1 bool, sel bool) (bool, bool) {
 	result1 := not(sel)
-	output1 := and(result1, input1) // stuur naar output2 als sel false is
+	output1 := and(input1, result1) // stuur naar output2 als sel false is
 
 	output2 := and(input1, sel) // stuur naar output1 als sel true is
 	return output1, output2

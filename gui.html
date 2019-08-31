@@ -12,6 +12,10 @@
     .clickable {
       cursor: pointer;
     }
+
+    #screen {
+      border: 1px solid grey
+    }
   </style>
 </head>
 
@@ -75,7 +79,7 @@
                 <tbody>
                   <tr v-for="(bits, index) in visibleRAM" @click="selectRAM(index + ramPage)" class="clickable">
                     <td>{{ index + ramPage }}</td>
-                    <td v-if="selectedRAM.index === index" @click.stop>
+                    <td v-if="selectedRAM.index === index + ramPage" @click.stop>
                       <div class="field">
                         <div class="control">
                           <input v-model="selectedRAM.bits" class="input" type="text">
@@ -119,6 +123,10 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div class="box">
+            <h2 class="subtitle">Screen</h2>
+            <canvas id="screen" width="512px" height="256px"></canvas>
           </div>
         </div>
       </div>
@@ -257,16 +265,24 @@
       created: function () {
         fetch("/load").then(response => response.json()).then(response => {
           this.rom = response.rom;
-          fetch("/reset").then(response => response.json()).then(state => this.state = state)
+          fetch("/reset").then(response => response.json()).then(state => {
+            this.state = state;
+            this.nextFrame()
+          })
         })
-
       },
       methods: {
         nextTick: function () {
-          fetch("/tick").then(response => response.json()).then(state => this.state = state)
+          fetch("/tick").then(response => response.json()).then(state => {
+            this.state = state;
+            this.nextFrame()
+          })
         },
         reset: function () {
-          fetch("/reset").then(response => response.json()).then(state => this.state = state)
+          fetch("/reset").then(response => response.json()).then(state => {
+            this.state = state;
+            this.nextFrame()
+          })
         },
         selectRAM: function (index) {
           this.selectedRAM.error.items = null
@@ -302,8 +318,19 @@
             state => {
               this.state = state;
               this.deselectRAM()
+              this.nextFrame()
             }
           )
+        },
+        nextFrame: function () {
+          let c = document.getElementById("screen")
+          let ctx = c.getContext('2d')
+          ctx.clearRect(0, 0, 512, 256)
+          for (let i = 0; i < 131072; i++) {
+            if (this.state.ram[16384 + Math.floor(i / 16)].substring(i % 16, i % 16 + 1) === "1") {
+              ctx.fillRect(i % 512, Math.floor(i / 512), 1, 1)
+            }
+          }
         }
       }
     })

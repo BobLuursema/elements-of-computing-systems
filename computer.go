@@ -74,19 +74,27 @@ func (c *cpu) tick(instruction []bool, inM []bool, reset bool) ([]bool, bool, []
 }
 
 type memory struct {
-	ram ram16k
+	ram0 ram16k
+	ram1 ram16k
 }
 
+// Run next tick, takes a 15 bit address
 func (m *memory) tick(in []bool, address []bool, load bool) {
-	m.ram.tick(in, address[1:], load)
+	a0, a1 := dmux(load, address[0])
+	m.ram0.tick(in, address[1:], a0)
+	m.ram1.tick(in, address[1:], a1)
 }
 
+// Read an address in memory, takes a 15 bit address
 func (m *memory) read(address []bool) []bool {
-	return m.ram.read(address[1:])
+	return muxMulti(
+		m.ram0.read(address[1:]),
+		m.ram1.read(address[1:]),
+		address[0])
 }
 
 func getMemory(bits int) memory {
-	return memory{ram: getRAM16K(bits)}
+	return memory{ram0: getRAM16K(bits), ram1: getRAM16K(bits)}
 }
 
 type rom32k struct {
@@ -94,6 +102,7 @@ type rom32k struct {
 	rom1 ram16k
 }
 
+// Load a .hack file into ROM
 func (r *rom32k) loadProgram(filePath string) {
 	file, _ := os.Open(filePath)
 	defer file.Close()
@@ -108,14 +117,19 @@ func (r *rom32k) loadProgram(filePath string) {
 	}
 }
 
+// Write to a 15 bit address
 func (r *rom32k) write(in []bool, address []bool) {
 	a0, a1 := dmux(true, address[0])
 	r.rom0.tick(in, address[1:], a0)
 	r.rom1.tick(in, address[1:], a1)
 }
 
+// Read an address from ROM, takes a 15 bit address
 func (r *rom32k) read(address []bool) []bool {
-	return muxMulti(r.rom0.read(address[1:]), r.rom1.read(address[1:]), address[0])
+	return muxMulti(
+		r.rom0.read(address[1:]),
+		r.rom1.read(address[1:]),
+		address[0])
 }
 
 func getROM(bits int) rom32k {
@@ -128,6 +142,7 @@ type computer struct {
 	data      memory
 }
 
+// Execute the next tick
 func (c *computer) tick(reset bool) {
 	instruction := c.program.read(c.processor.count.read())
 	inM := c.data.read(c.processor.aRegister.out[1:])
@@ -135,6 +150,7 @@ func (c *computer) tick(reset bool) {
 	c.data.tick(outM, addressM, writeM)
 }
 
+// Load a .hack file into ROM
 func (c *computer) loadProgram(filePath string) {
 	c.program.loadProgram(filePath)
 }
