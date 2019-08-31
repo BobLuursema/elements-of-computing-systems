@@ -161,8 +161,8 @@
     window.app = new Vue({
       el: '#app',
       data: {
+        rom: [],
         state: {
-          rom: [],
           ram: [],
           pc: "0000000000000000",
           aRegister: "0000000000000000",
@@ -179,9 +179,9 @@
       },
       computed: {
         shortenedROM: function () {
-          for (let i = this.state.rom.length - 1; true; i--) {
-            if (this.state.rom[i] !== "0000000000000000") {
-              return this.state.rom.slice(0, i + 1)
+          for (let i = this.rom.length - 1; true; i--) {
+            if (this.rom[i] !== "0000000000000000") {
+              return this.rom.slice(0, i + 1)
             }
           }
           return []
@@ -242,7 +242,11 @@
         }
       },
       created: function () {
-        fetch("/load").then(response => response.json()).then(state => this.state = state)
+        fetch("/load").then(response => response.json()).then(response => {
+          this.rom = response.rom;
+          fetch("/reset").then(response => response.json()).then(state => this.state = state)
+        })
+
       },
       methods: {
         nextTick: function () {

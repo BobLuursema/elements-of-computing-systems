@@ -18,13 +18,17 @@ type computerState struct {
 	Dregister string   `json:"dRegister"`
 }
 
+type programState struct {
+	ROM []string `json:"rom"`
+}
+
 func guiHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "gui.html")
 }
 
 func loadProgram(w http.ResponseWriter, r *http.Request) {
 	comp.loadProgram("test.hack")
-	json.NewEncoder(w).Encode(getState())
+	json.NewEncoder(w).Encode(programState{ROM: dumpROM(&comp.program)})
 }
 
 func doTick(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +65,6 @@ func setRAM(w http.ResponseWriter, r *http.Request) {
 
 func getState() computerState {
 	return computerState{
-		ROM:       dumpROM(&comp.program),
 		RAM:       dumpRAM(&comp.data),
 		PC:        boolToStr(comp.processor.count.read()),
 		Aregister: boolToStr(comp.processor.aRegister.out),
