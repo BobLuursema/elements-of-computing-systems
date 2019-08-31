@@ -52,6 +52,7 @@ type ram8 struct {
 	registers []register
 }
 
+// Run next tick, takes a 3 bit address.
 func (r *ram8) tick(in []bool, address []bool, load bool) {
 	a0, a1, a2, a3, a4, a5, a6, a7 := dmux8Way(load, address)
 	r.registers[0].tick(in, a0)
@@ -64,6 +65,7 @@ func (r *ram8) tick(in []bool, address []bool, load bool) {
 	r.registers[7].tick(in, a7)
 }
 
+// Read an address in memory, takes a 3 bit address.
 func (r *ram8) read(address []bool) []bool {
 	return mux8WayMulti(
 		r.registers[0].out,
@@ -89,6 +91,7 @@ type ram64 struct {
 	ram8s []ram8
 }
 
+// Run next tick, takes a 6 bit address.
 func (r *ram64) tick(in []bool, address []bool, load bool) {
 	a0, a1, a2, a3, a4, a5, a6, a7 := dmux8Way(load, address[:3])
 	r.ram8s[0].tick(in, address[3:], a0)
@@ -101,6 +104,7 @@ func (r *ram64) tick(in []bool, address []bool, load bool) {
 	r.ram8s[7].tick(in, address[3:], a7)
 }
 
+// Read an address in memory, takes a 6 bit address.
 func (r *ram64) read(address []bool) []bool {
 	return mux8WayMulti(
 		r.ram8s[0].read(address[3:]),
@@ -122,10 +126,12 @@ func getRAM64(registerSize int) ram64 {
 	return ram64{ram8s: ram8s}
 }
 
+// Takes a selector of length 9
 type ram512 struct {
 	ram64s []ram64
 }
 
+// Run next tick, takes a 9 bit address.
 func (r *ram512) tick(in []bool, address []bool, load bool) {
 	a0, a1, a2, a3, a4, a5, a6, a7 := dmux8Way(load, address[:3])
 	r.ram64s[0].tick(in, address[3:], a0)
@@ -138,6 +144,7 @@ func (r *ram512) tick(in []bool, address []bool, load bool) {
 	r.ram64s[7].tick(in, address[3:], a7)
 }
 
+// Read an address in memory, takes a 9 bit address.
 func (r *ram512) read(address []bool) []bool {
 	return mux8WayMulti(
 		r.ram64s[0].read(address[3:]),
@@ -163,6 +170,7 @@ type ram4k struct {
 	ram512s []ram512
 }
 
+// Run next tick, takes a 12 bit address.
 func (r *ram4k) tick(in []bool, address []bool, load bool) {
 	a0, a1, a2, a3, a4, a5, a6, a7 := dmux8Way(load, address[:3])
 	r.ram512s[0].tick(in, address[3:], a0)
@@ -175,6 +183,7 @@ func (r *ram4k) tick(in []bool, address []bool, load bool) {
 	r.ram512s[7].tick(in, address[3:], a7)
 }
 
+// Read an address in memory, takes a 12 bit address.
 func (r *ram4k) read(address []bool) []bool {
 	return mux8WayMulti(
 		r.ram512s[0].read(address[3:]),
@@ -200,6 +209,7 @@ type ram16k struct {
 	ram4ks []ram4k
 }
 
+// Run next tick, takes a 14 bit address.
 func (r *ram16k) tick(in []bool, address []bool, load bool) {
 	a0, a1, a2, a3 := dmux4Way(load, address[:2])
 	r.ram4ks[0].tick(in, address[2:], a0)
@@ -208,6 +218,7 @@ func (r *ram16k) tick(in []bool, address []bool, load bool) {
 	r.ram4ks[3].tick(in, address[2:], a3)
 }
 
+// Read an address in memory, takes a 14 bit address.
 func (r *ram16k) read(address []bool) []bool {
 	return mux4WayMulti(
 		r.ram4ks[0].read(address[2:]),

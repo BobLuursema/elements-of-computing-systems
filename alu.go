@@ -5,18 +5,21 @@ Chapter 2
 Constructing an ALU.
 */
 
+// Adds two bits, returns sum and carry
 func halfAdder(input1 bool, input2 bool) (bool, bool) {
 	sum := xor(input1, input2)
 	carry := and(input1, input2)
 	return sum, carry
 }
 
+// Adds two bits and a carry, returns sum and carry
 func fullAdder(input1 bool, input2 bool, input3 bool) (bool, bool) {
 	sum1, carry1 := halfAdder(input1, input2)
 	sum2, carry2 := halfAdder(sum1, input3)
 	return sum2, or(carry1, carry2)
 }
 
+// Adds two inputs
 func add(input1 []bool, input2 []bool) []bool {
 	result := make([]bool, len(input1))
 	carry := false
@@ -28,12 +31,14 @@ func add(input1 []bool, input2 []bool) []bool {
 	return result
 }
 
+// Add one to input
 func increment(input []bool) []bool {
 	one := make([]bool, len(input))
 	one[len(one)-1] = true
 	return add(input, one)
 }
 
+// Perform ALU operation, return output, isZero, isNegative
 func alu(inputX []bool, inputY []bool, zeroX bool, negateX bool, zeroY bool, negateY bool, addFunction bool, negateOutput bool) ([]bool, bool, bool) {
 	zero := make([]bool, len(inputX))
 	inputX = muxMulti(inputX, zero, zeroX)
