@@ -58,7 +58,7 @@ func setRAM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	index := setram["index"].(float64)
-	value := setram["value"].(string)
+	value := setram["bits"].(string)
 	comp.data.tick(strToBool(value), intToBools(int(index), 15), true)
 	json.NewEncoder(w).Encode(getState())
 }

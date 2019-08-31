@@ -28,17 +28,6 @@
           <button @click="nextTick" class="button">Next tick</button>
           <button @click="reset" class="button">Reset</button>
         </div>
-        <div>
-          <div class="field">
-            <label class="label">RAM slot: {{ editRAM.index }}</label>
-            <div class="control">
-              <input v-model="editRAM.value" class="input" type="text">
-            </div>
-            <p class="help is-danger" v-if="error.items">Value needs 16 items, currently has {{ error.items }}</p>
-            <p class="help is-danger" v-if="error.value">Value can only have 0s and 1s</p>
-          </div>
-        </div>
-        <button @click="updateRAM" class="button">Submit</button>
       </div>
 
       <div class="columns">
@@ -68,6 +57,21 @@
         <div class="column">
           <div class="box">
             <h2 class="subtitle">RAM</h2>
+            <div v-show="selectedRAM.index !== null">
+              <div class="field">
+                <label class="label">RAM slot: {{ selectedRAM.index }}</label>
+                <div class="control">
+                  <input v-model="selectedRAM.bits" class="input" type="text">
+                </div>
+                <p class="help is-danger" v-if="selectedRAM.error.items">Value needs 16 items, currently has
+                  {{ selectedRAM.error.items }}</p>
+                <p class="help is-danger" v-if="selectedRAM.error.value">Value can only have 0s and 1s</p>
+              </div>
+              <div class="buttons">
+                <button @click.stop="updateRAM" class="button">Submit</button>
+                <button @click.stop="deselectRAM" class="button">Cancel</button>
+              </div>
+            </div>
             <div style="max-height: 65vh; overflow-y: scroll">
               <table id="ram" class="table">
                 <thead>
@@ -78,7 +82,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(bits, index) in state.ram" @click="selectRAM(bits, index)" class="clickable">
+                  <tr v-for="(bits, index) in state.ram" @click="selectRAM(index)" class="clickable">
                     <td>{{ index }}</td>
                     <td>{{ bits }}</td>
                     <td>{{ bits | bitsToInt }}</td>
@@ -168,14 +172,14 @@
           aRegister: "0000000000000000",
           dRegister: "0000000000000000"
         },
-        editRAM: {
-          index: 0,
-          value: "0000000000000000"
+        selectedRAM: {
+          index: null,
+          bits: "0000000000000000",
+          error: {
+            items: null,
+            value: null
+          }
         },
-        error: {
-          items: null,
-          value: null
-        }
       },
       computed: {
         shortenedROM: function () {
@@ -185,9 +189,6 @@
             }
           }
           return []
-        },
-        shortenedRAM: function () {
-          return this.state.ram.filter(a => a !== '0000000000000000')
         },
         pc: function () {
           return bitsToInt(this.state.pc)
@@ -255,25 +256,42 @@
         reset: function () {
           fetch("/reset").then(response => response.json()).then(state => this.state = state)
         },
-        selectRAM: function (bits, index) {
-          this.editRAM.value = bits
-          this.editRAM.index = index
+        selectRAM: function (index) {
+          this.selectedRAM.error.items = null
+          this.selectedRAM.error.value = null
+          this.selectedRAM.bits = this.state.ram[index]
+          this.selectedRAM.index = index
+        },
+        deselectRAM: function () {
+          this.selectedRAM = {
+            index: null,
+            bits: "0000000000000000",
+            error: {
+              items: null,
+              value: null
+            }
+          }
         },
         updateRAM: function () {
-          this.error.items = null
-          this.error.value = null
-          if (this.editRAM.value.length !== 16) {
-            this.error.items = this.editRAM.value.length
+          this.selectedRAM.error.items = null
+          this.selectedRAM.error.value = null
+          if (this.selectedRAM.bits.length !== 16) {
+            this.selectedRAM.error.items = this.selectedRAM.bits.length
             return
           }
-          if ([...this.editRAM.value].filter(a => a !== "0" && a !== "1").length > 0) {
-            this.error.value = true
+          if ([...this.selectedRAM.bits].filter(a => a !== "0" && a !== "1").length > 0) {
+            this.selectedRAM.error.value = true
             return
           }
           fetch("/set-ram", {
             method: "POST",
-            body: JSON.stringify(this.editRAM)
-          }).then(response => response.json()).then(state => this.state = state)
+            body: JSON.stringify(this.selectedRAM)
+          }).then(response => response.json()).then(
+            state => {
+              this.state = state;
+              this.deselectRAM()
+            }
+          )
         }
       }
     })
