@@ -201,7 +201,11 @@
             value = value + parseInt(bits[i]) * factor
             factor = factor * 2
           }
-          return value
+          if (bits.substring(0, 1) === "0") {
+            return value
+          }
+          return value - 65536
+
         },
         instruction: function (bits) {
           if (bits[0] === "0") {
