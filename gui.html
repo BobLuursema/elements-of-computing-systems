@@ -16,6 +16,12 @@
     #screen {
       border: 1px solid grey
     }
+
+    #keyboard {
+      width: 200px;
+      height: 100px;
+      border: 1px solid grey
+    }
   </style>
 </head>
 
@@ -128,6 +134,10 @@
             <h2 class="subtitle">Screen</h2>
             <canvas id="screen" width="512px" height="256px"></canvas>
           </div>
+          <div class="box">
+            <h2 class="subtitle">Keyboard</h2>
+            <div id="keyboard" tabindex="0" @keydown="onKeyDown" @keyup="onKeyUp">{{ pressedKey }}</div>
+          </div>
         </div>
       </div>
 
@@ -175,6 +185,59 @@
       "0010101": "D|A",
       "1010101": "D|M"
     }
+    const keyboardMap = {
+      "a": "0000000001100001",
+      "b": "0000000001100010",
+      "c": "0000000001100011",
+      "d": "0000000001100100",
+      "e": "0000000001100101",
+      "f": "0000000001100110",
+      "g": "0000000001100111",
+      "h": "0000000001101000",
+      "i": "0000000001101001",
+      "j": "0000000001101010",
+      "k": "0000000001101011",
+      "l": "0000000001101100",
+      "m": "0000000001101101",
+      "n": "0000000001101110",
+      "o": "0000000001101111",
+      "p": "0000000001110000",
+      "q": "0000000001110001",
+      "r": "0000000001110010",
+      "s": "0000000001110011",
+      "t": "0000000001110100",
+      "u": "0000000001110101",
+      "v": "0000000001110110",
+      "w": "0000000001110111",
+      "x": "0000000001111000",
+      "y": "0000000001111001",
+      "z": "0000000001111010",
+      "Enter": "0000000010000000",
+      "backspace": "0000000010000001",
+      "ArrowLeft": "0000000010000010",
+      "ArrowUp": "0000000010000011",
+      "ArrowRight": "0000000010000100",
+      "ArrowDown": "0000000010000101",
+      "Home": "0000000010000110",
+      "End": "0000000010000111",
+      "PageUp": "0000000010001000",
+      "PageDown": "0000000010001001",
+      "Insert": "0000000010001010",
+      "Delete": "0000000010001011",
+      "Escape": "0000000010001100",
+      "F1": "0000000010001101",
+      "F2": "0000000010001110",
+      "F3": "0000000010001111",
+      "F4": "0000000010010000",
+      "F5": "0000000010010001",
+      "F6": "0000000010010010",
+      "F7": "0000000010010011",
+      "F8": "0000000010010100",
+      "F9": "0000000010010101",
+      "F10": "0000000010010110",
+      "F11": "0000000010010111",
+      "F12": "0000000010011000",
+    }
     window.app = new Vue({
       el: '#app',
       data: {
@@ -194,6 +257,7 @@
           }
         },
         ramPage: 0,
+        pressedKey: null
       },
       computed: {
         visibleRAM: function () {
@@ -331,6 +395,37 @@
               ctx.fillRect(i % 512, Math.floor(i / 512), 1, 1)
             }
           }
+        },
+        onKeyDown: function (event) {
+          if (event.key === this.pressedKey) {
+            return
+          }
+          fetch("/set-ram", {
+            method: "POST",
+            body: JSON.stringify({
+              index: 24576,
+              bits: keyboardMap[event.key] || "0000000000000000"
+            })
+          })
+            .then(response => response.json())
+            .then(state => {
+              this.pressedKey = event.key
+              this.state = state;
+            })
+        },
+        onKeyUp: function () {
+          fetch("/set-ram", {
+            method: "POST",
+            body: JSON.stringify({
+              index: 24576,
+              bits: "0000000000000000"
+            })
+          })
+            .then(response => response.json())
+            .then(state => {
+              this.pressedKey = null
+              this.state = state;
+            })
         }
       }
     })
