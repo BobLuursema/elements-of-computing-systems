@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"os"
 	"strings"
 	"testing"
 )
@@ -57,22 +56,6 @@ func intToBools(input int, bits int) []bool {
 		output = append(output, outputBool)
 	}
 	return output
-}
-
-func dump(rom *rom32k, filename string) {
-	f, _ := os.Create(filename)
-	defer f.Close()
-	for _, r4k := range rom.rom0.ram4ks {
-		for _, r512 := range r4k.ram512s {
-			for _, r64 := range r512.ram64s {
-				for _, r8 := range r64.ram8s {
-					for _, r := range r8.registers {
-						f.WriteString(boolToStr(r.out) + "\n")
-					}
-				}
-			}
-		}
-	}
 }
 
 func dumpROM(rom *rom32k) []string {

@@ -135,92 +135,92 @@ func TestDmux(t *testing.T) {
 }
 
 func TestNotMulti(t *testing.T) {
-	result := notMulti([]bool{true, false, true, true})
-	assertSlice(result, []bool{false, true, false, false}, t)
+	result := notMulti(strToBool("1011"))
+	assertSlice(result, strToBool("0100"), t)
 }
 
 func TestAndMulti(t *testing.T) {
-	result := andMulti([]bool{true, true, false, false}, []bool{true, false, true, false})
-	assertSlice(result, []bool{true, false, false, false}, t)
+	result := andMulti(strToBool("1100"), strToBool("1010"))
+	assertSlice(result, strToBool("1000"), t)
 }
 
 func TestOrMulti(t *testing.T) {
-	result := orMulti([]bool{true, true, false, false}, []bool{true, false, true, false})
-	assertSlice(result, []bool{true, true, true, false}, t)
+	result := orMulti(strToBool("1100"), strToBool("1010"))
+	assertSlice(result, strToBool("1110"), t)
 }
 
 func TestMuxMulti(t *testing.T) {
-	result := muxMulti([]bool{true, true, false, false}, []bool{true, false, true, false}, false)
-	assertSlice(result, []bool{true, true, false, false}, t)
-	result = muxMulti([]bool{true, true, false, false}, []bool{true, false, true, false}, true)
-	assertSlice(result, []bool{true, false, true, false}, t)
+	result := muxMulti(strToBool("1100"), strToBool("1010"), false)
+	assertSlice(result, strToBool("1100"), t)
+	result = muxMulti(strToBool("1100"), strToBool("1010"), true)
+	assertSlice(result, strToBool("1010"), t)
 }
 
 func TestDmuxMulti(t *testing.T) {
-	result1, result2 := dmuxMulti([]bool{true, true}, false)
-	assertSlice(result1, []bool{true, true}, t)
-	assertSlice(result2, []bool{false, false}, t)
-	result1, result2 = dmuxMulti([]bool{true, true}, true)
-	assertSlice(result1, []bool{false, false}, t)
-	assertSlice(result2, []bool{true, true}, t)
+	result1, result2 := dmuxMulti(strToBool("11"), false)
+	assertSlice(result1, strToBool("11"), t)
+	assertSlice(result2, strToBool("00"), t)
+	result1, result2 = dmuxMulti(strToBool("11"), true)
+	assertSlice(result1, strToBool("00"), t)
+	assertSlice(result2, strToBool("11"), t)
 }
 
 func TestOrMultiWay(t *testing.T) {
-	if orMultiWay([]bool{false, false, false}) != false {
+	if orMultiWay(strToBool("000")) != false {
 		t.Error("All false != false")
 	}
-	if orMultiWay([]bool{false, true, false}) != true {
+	if orMultiWay(strToBool("010")) != true {
 		t.Error("One true != true")
 	}
 }
 
 func TestMux4WayMulti(t *testing.T) {
-	result := mux4WayMulti([]bool{true, true}, []bool{true, false}, []bool{false, true}, []bool{false, false}, []bool{false, false})
-	assertSlice(result, []bool{true, true}, t)
-	result = mux4WayMulti([]bool{true, true}, []bool{true, false}, []bool{false, true}, []bool{false, false}, []bool{false, true})
-	assertSlice(result, []bool{true, false}, t)
-	result = mux4WayMulti([]bool{true, true}, []bool{true, false}, []bool{false, true}, []bool{false, false}, []bool{true, false})
-	assertSlice(result, []bool{false, true}, t)
-	result = mux4WayMulti([]bool{true, true}, []bool{true, false}, []bool{false, true}, []bool{false, false}, []bool{true, true})
-	assertSlice(result, []bool{false, false}, t)
+	result := mux4WayMulti(strToBool("11"), strToBool("10"), strToBool("01"), strToBool("00"), strToBool("00"))
+	assertSlice(result, strToBool("11"), t)
+	result = mux4WayMulti(strToBool("11"), strToBool("10"), strToBool("01"), strToBool("00"), strToBool("01"))
+	assertSlice(result, strToBool("10"), t)
+	result = mux4WayMulti(strToBool("11"), strToBool("10"), strToBool("01"), strToBool("00"), strToBool("10"))
+	assertSlice(result, strToBool("01"), t)
+	result = mux4WayMulti(strToBool("11"), strToBool("10"), strToBool("01"), strToBool("00"), strToBool("11"))
+	assertSlice(result, strToBool("00"), t)
 }
 
 func TestMux8WayMulti(t *testing.T) {
-	result := mux8WayMulti([]bool{true, true, true}, []bool{true, false, true}, []bool{false, true, true}, []bool{false, false, true}, []bool{true, true, false}, []bool{true, false, false}, []bool{false, true, false}, []bool{false, false, false}, []bool{false, false, false})
-	assertSlice(result, []bool{true, true, true}, t)
-	result = mux8WayMulti([]bool{true, true, true}, []bool{true, false, true}, []bool{false, true, true}, []bool{false, false, true}, []bool{true, true, false}, []bool{true, false, false}, []bool{false, true, false}, []bool{false, false, false}, []bool{true, false, true})
-	assertSlice(result, []bool{true, false, false}, t)
+	result := mux8WayMulti(strToBool("111"), strToBool("101"), strToBool("011"), strToBool("001"), strToBool("110"), strToBool("100"), strToBool("010"), strToBool("000"), strToBool("000"))
+	assertSlice(result, strToBool("111"), t)
+	result = mux8WayMulti(strToBool("111"), strToBool("101"), strToBool("011"), strToBool("001"), strToBool("110"), strToBool("100"), strToBool("010"), strToBool("000"), strToBool("101"))
+	assertSlice(result, strToBool("100"), t)
 }
 
 func TestDmux4Way(t *testing.T) {
-	result1, result2, result3, result4 := dmux4Way(true, []bool{false, false})
+	result1, result2, result3, result4 := dmux4Way(true, strToBool("00"))
 	if result1 != true || result2 != false || result3 != false || result4 != false {
 		t.Error("Select 1 failed")
 	}
-	result1, result2, result3, result4 = dmux4Way(true, []bool{false, true})
+	result1, result2, result3, result4 = dmux4Way(true, strToBool("01"))
 	if result1 != false || result2 != true || result3 != false || result4 != false {
 		t.Error("Select 2 failed")
 	}
-	result1, result2, result3, result4 = dmux4Way(true, []bool{true, false})
+	result1, result2, result3, result4 = dmux4Way(true, strToBool("10"))
 	if result1 != false || result2 != false || result3 != true || result4 != false {
 		t.Error("Select 3 failed")
 	}
-	result1, result2, result3, result4 = dmux4Way(true, []bool{true, true})
+	result1, result2, result3, result4 = dmux4Way(true, strToBool("11"))
 	if result1 != false || result2 != false || result3 != false || result4 != true {
 		t.Error("Select 4 failed")
 	}
 }
 
 func TestDmux8Way(t *testing.T) {
-	o1, _, _, _, _, _, _, _ := dmux8Way(true, []bool{false, false, false})
+	o1, _, _, _, _, _, _, _ := dmux8Way(true, strToBool("000"))
 	if o1 != true {
 		t.Error("Select 1 failed")
 	}
-	_, o2, _, _, _, _, _, _ := dmux8Way(true, []bool{false, false, true})
+	_, o2, _, _, _, _, _, _ := dmux8Way(true, strToBool("001"))
 	if o2 != true {
 		t.Error("Select 2 failed")
 	}
-	_, _, _, _, _, o6, _, _ := dmux8Way(true, []bool{true, false, true})
+	_, _, _, _, _, o6, _, _ := dmux8Way(true, strToBool("101"))
 	if o6 != true {
 		t.Error("Select 5 failed")
 	}

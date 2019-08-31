@@ -35,61 +35,61 @@ func TestBit(t *testing.T) {
 
 func TestRegister(t *testing.T) {
 	r := register{bits: []bit{bit{dff: dataFlipFlop{}}, bit{dff: dataFlipFlop{}}}}
-	r.out = []bool{false, false}
-	r.tick([]bool{false, true}, false)
-	assertSlice(r.out, []bool{false, false}, t)
-	r.tick([]bool{false, true}, true)
-	assertSlice(r.out, []bool{false, true}, t)
+	r.out = strToBool("00")
+	r.tick(strToBool("01"), false)
+	assertSlice(r.out, strToBool("00"), t)
+	r.tick(strToBool("01"), true)
+	assertSlice(r.out, strToBool("01"), t)
 }
 
 func TestRAM8(t *testing.T) {
 	r := getRAM8(3)
-	result := r.read([]bool{false, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	r.tick([]bool{true, false, true}, []bool{true, true, false}, true)
-	result = r.read([]bool{false, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{false, false, true})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{false, true, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{false, true, true})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{true, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{true, false, true})
-	assertSlice(result, []bool{false, false, false}, t)
-	result = r.read([]bool{true, true, false})
-	assertSlice(result, []bool{true, false, true}, t)
-	result = r.read([]bool{true, true, true})
-	assertSlice(result, []bool{false, false, false}, t)
+	result := r.read(strToBool("000"))
+	assertSlice(result, strToBool("000"), t)
+	r.tick(strToBool("101"), strToBool("110"), true)
+	result = r.read(strToBool("000"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("001"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("010"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("011"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("100"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("101"))
+	assertSlice(result, strToBool("000"), t)
+	result = r.read(strToBool("110"))
+	assertSlice(result, strToBool("101"), t)
+	result = r.read(strToBool("111"))
+	assertSlice(result, strToBool("000"), t)
 }
 
 func TestRAM64(t *testing.T) {
 	r := getRAM64(3)
-	result := r.read([]bool{false, false, false, false, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	r.tick([]bool{true, true, false}, []bool{false, true, true, false, false, true}, true)
-	result = r.read([]bool{false, true, true, false, false, true})
-	assertSlice(result, []bool{true, true, false}, t)
+	result := r.read(strToBool("000000"))
+	assertSlice(result, strToBool("000"), t)
+	r.tick(strToBool("110"), strToBool("011001"), true)
+	result = r.read(strToBool("011001"))
+	assertSlice(result, strToBool("110"), t)
 }
 
 func TestRAM512(t *testing.T) {
 	r := getRAM512(3)
-	result := r.read([]bool{false, false, false, false, false, false, false, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	r.tick([]bool{true, true, false}, []bool{false, false, true, true, false, true, false, false, true}, true)
-	result = r.read([]bool{false, false, true, true, false, true, false, false, true})
-	assertSlice(result, []bool{true, true, false}, t)
+	result := r.read(strToBool("000000000"))
+	assertSlice(result, strToBool("000"), t)
+	r.tick(strToBool("110"), strToBool("001101001"), true)
+	result = r.read(strToBool("001101001"))
+	assertSlice(result, strToBool("110"), t)
 }
 
 func TestRAM4K(t *testing.T) {
 	r := getRAM4K(3)
-	result := r.read([]bool{false, false, false, false, false, false, false, false, false, false, false, false})
-	assertSlice(result, []bool{false, false, false}, t)
-	r.tick([]bool{true, true, false}, []bool{false, false, false, false, false, false, false, false, false, false, false, false}, true)
-	result = r.read([]bool{false, false, false, false, false, false, false, false, false, false, false, false})
-	assertSlice(result, []bool{true, true, false}, t)
+	result := r.read(strToBool("000000000000"))
+	assertSlice(result, strToBool("000"), t)
+	r.tick(strToBool("110"), strToBool("000000000000"), true)
+	result = r.read(strToBool("000000000000"))
+	assertSlice(result, strToBool("110"), t)
 }
 
 func TestRAM16K(t *testing.T) {

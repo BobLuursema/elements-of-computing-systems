@@ -57,63 +57,63 @@ func TestFullAdder(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	result := add([]bool{false, false, false}, []bool{false, true, false})
-	assertSlice(result, []bool{false, true, false}, t)
-	result = add([]bool{false, false, true}, []bool{false, true, false})
-	assertSlice(result, []bool{false, true, true}, t)
-	result = add([]bool{false, false, true}, []bool{false, true, true})
-	assertSlice(result, []bool{true, false, false}, t)
-	result = add([]bool{true, false, true}, []bool{false, true, true})
-	assertSlice(result, []bool{false, false, false}, t)
+	result := add(strToBool("000"), strToBool("010"))
+	assertSlice(result, strToBool("010"), t)
+	result = add(strToBool("001"), strToBool("010"))
+	assertSlice(result, strToBool("011"), t)
+	result = add(strToBool("001"), strToBool("011"))
+	assertSlice(result, strToBool("100"), t)
+	result = add(strToBool("101"), strToBool("011"))
+	assertSlice(result, strToBool("000"), t)
 }
 
 func TestIncrement(t *testing.T) {
-	result := increment([]bool{false, false})
-	assertSlice(result, []bool{false, true}, t)
-	result = increment([]bool{false, true})
-	assertSlice(result, []bool{true, false}, t)
-	result = increment([]bool{true, true})
-	assertSlice(result, []bool{false, false}, t)
+	result := increment(strToBool("00"))
+	assertSlice(result, strToBool("01"), t)
+	result = increment(strToBool("01"))
+	assertSlice(result, strToBool("10"), t)
+	result = increment(strToBool("11"))
+	assertSlice(result, strToBool("00"), t)
 }
 
 func TestAlu(t *testing.T) {
-	output, zero, negative := alu([]bool{false, false}, []bool{false, true}, false, false, false, false, true, false)
-	assertSlice(output, []bool{false, true}, t)
+	output, zero, negative := alu(strToBool("00"), strToBool("01"), false, false, false, false, true, false)
+	assertSlice(output, strToBool("01"), t)
 	if !(zero == false && negative == false) {
 		t.Error("Error 1")
 	}
-	output, zero, negative = alu([]bool{false, false}, []bool{false, true}, false, false, false, false, false, false)
-	assertSlice(output, []bool{false, false}, t)
+	output, zero, negative = alu(strToBool("00"), strToBool("01"), false, false, false, false, false, false)
+	assertSlice(output, strToBool("00"), t)
 	if !(zero == true && negative == false) {
 		t.Error("Error 2")
 	}
-	output, zero, negative = alu([]bool{false, true}, []bool{false, true}, false, false, false, false, true, false)
-	assertSlice(output, []bool{true, false}, t)
+	output, zero, negative = alu(strToBool("01"), strToBool("01"), false, false, false, false, true, false)
+	assertSlice(output, strToBool("10"), t)
 	if !(zero == false && negative == true) {
 		t.Error("Error 3")
 	}
-	output, zero, negative = alu([]bool{true, false}, []bool{false, true}, true, false, false, false, true, false)
-	assertSlice(output, []bool{false, true}, t)
+	output, zero, negative = alu(strToBool("10"), strToBool("01"), true, false, false, false, true, false)
+	assertSlice(output, strToBool("01"), t)
 	if !(zero == false && negative == false) {
 		t.Error("Error 4")
 	}
-	output, zero, negative = alu([]bool{true, false}, []bool{false, true}, false, false, true, false, true, false)
-	assertSlice(output, []bool{true, false}, t)
+	output, zero, negative = alu(strToBool("10"), strToBool("01"), false, false, true, false, true, false)
+	assertSlice(output, strToBool("10"), t)
 	if !(zero == false && negative == true) {
 		t.Error("Error 5")
 	}
-	output, zero, negative = alu([]bool{true, false}, []bool{false, true}, false, true, false, false, false, false)
-	assertSlice(output, []bool{false, true}, t)
+	output, zero, negative = alu(strToBool("10"), strToBool("01"), false, true, false, false, false, false)
+	assertSlice(output, strToBool("01"), t)
 	if !(zero == false && negative == false) {
 		t.Error("Error 6")
 	}
-	output, zero, negative = alu([]bool{true, false}, []bool{false, true}, false, false, false, true, false, false)
-	assertSlice(output, []bool{true, false}, t)
+	output, zero, negative = alu(strToBool("10"), strToBool("01"), false, false, false, true, false, false)
+	assertSlice(output, strToBool("10"), t)
 	if !(zero == false && negative == true) {
 		t.Error("Error 7")
 	}
-	output, zero, negative = alu([]bool{true, false}, []bool{false, true}, false, false, false, true, false, true)
-	assertSlice(output, []bool{false, true}, t)
+	output, zero, negative = alu(strToBool("10"), strToBool("01"), false, false, false, true, false, true)
+	assertSlice(output, strToBool("01"), t)
 	if !(zero == false && negative == false) {
 		t.Error("Error 8")
 	}
