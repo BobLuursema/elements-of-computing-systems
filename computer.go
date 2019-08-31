@@ -48,19 +48,29 @@ j1	j2	j3
 */
 func (c *cpu) tick(instruction []bool, inM []bool, reset bool) ([]bool, bool, []bool, []bool) {
 	// Trigger ALU
-	output, isZero, isNegative := alu(c.dRegister.out, muxMulti(c.aRegister.out, inM, instruction[3]), instruction[4], instruction[5], instruction[6], instruction[7], instruction[8], instruction[9])
+	output, isZero, isNegative := alu(
+		c.dRegister.out,
+		muxMulti(c.aRegister.out, inM, instruction[3]),
+		instruction[4],
+		instruction[5],
+		instruction[6],
+		instruction[7],
+		instruction[8],
+		instruction[9])
 	// Store in D register
-	c.dRegister.tick(output, instruction[11])
+	shouldLoadD := and(instruction[11], instruction[0])
+	c.dRegister.tick(output, shouldLoadD)
 	// Store in A register
-	c.aRegister.tick(muxMulti(instruction, output, instruction[0]), or(instruction[10], not(instruction[0])))
+	shouldLoadA := or(not(instruction[0]), instruction[10])
+	c.aRegister.tick(muxMulti(instruction, output, instruction[0]), shouldLoadA)
 	// Check if we need to jump
 	shouldJump1 := and(isNegative, instruction[13])
 	shouldJump2 := and(isZero, instruction[14])
 	shouldJump3 := and(and(not(isNegative), not(isZero)), instruction[15])
 	shouldJump := and(or(or(shouldJump1, shouldJump2), shouldJump3), instruction[0])
 	// Increment program counter, load A register, or reset
-	c.count.tick(c.aRegister.out, true, shouldJump, reset)
-	return output, instruction[12], c.aRegister.out, c.count.read()
+	c.count.tick(c.aRegister.out[1:], true, shouldJump, reset)
+	return output, instruction[12], c.aRegister.out[1:], c.count.read()
 }
 
 type memory struct {
@@ -68,11 +78,11 @@ type memory struct {
 }
 
 func (m *memory) tick(in []bool, address []bool, load bool) {
-	m.ram.tick(in, address, load)
+	m.ram.tick(in, address[1:], load)
 }
 
 func (m *memory) read(address []bool) []bool {
-	return m.ram.read(address)
+	return m.ram.read(address[1:])
 }
 
 func getMemory(bits int) memory {
@@ -88,7 +98,7 @@ func (r *rom32k) loadProgram(filePath string) {
 	file, _ := os.Open(filePath)
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	address := []bool{false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}
+	address := strToBool("000000000000000")
 	index := 0
 	for scanner.Scan() {
 		in := scanner.Text()
@@ -120,7 +130,7 @@ type computer struct {
 
 func (c *computer) tick(reset bool) {
 	instruction := c.program.read(c.processor.count.read())
-	inM := c.data.read(c.processor.aRegister.out)
+	inM := c.data.read(c.processor.aRegister.out[1:])
 	outM, writeM, addressM, _ := c.processor.tick(instruction, inM, reset)
 	c.data.tick(outM, addressM, writeM)
 }

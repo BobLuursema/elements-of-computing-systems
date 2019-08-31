@@ -8,6 +8,11 @@
   <title>Hack computer</title>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css">
+  <style>
+    .clickable {
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
@@ -18,63 +23,90 @@
 
       <h1 class="title">HACK computer</h1>
 
-      <div class="buttons">
-        <button @click="nextTick" class="button">Next tick</button>
-        <button @click="reset" class="button">Reset</button>
+      <div class="box">
+        <div class="buttons">
+          <button @click="nextTick" class="button">Next tick</button>
+          <button @click="reset" class="button">Reset</button>
+        </div>
+        <div>
+          <div class="field">
+            <label class="label">RAM slot: {{ editRAM.index }}</label>
+            <div class="control">
+              <input v-model="editRAM.value" class="input" type="text">
+            </div>
+            <p class="help is-danger" v-if="error.items">Value needs 16 items, currently has {{ error.items }}</p>
+            <p class="help is-danger" v-if="error.value">Value can only have 0s and 1s</p>
+          </div>
+        </div>
+        <button @click="updateRAM" class="button">Submit</button>
       </div>
 
       <div class="columns">
         <div class="column">
           <div class="box">
             <h2 class="subtitle">ROM</h2>
-            <table id="rom" class="table">
-              <thead>
-                <tr>
-                  <th>Index</th>
-                  <th>Bits</th>
-                  <th>Instruction</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(bits, index) in shortenedROM">
-                  <td>{{ index }}</td>
-                  <td>{{ bits }}</td>
-                  <td>{{ bits | instruction }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style="max-height: 65vh; overflow-y: scroll">
+              <table id="rom" class="table">
+                <thead>
+                  <tr>
+                    <th>Index</th>
+                    <th>Bits</th>
+                    <th>Instruction</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(bits, index) in shortenedROM" :class="{'is-selected': index === pc }">
+                    <td>{{ index }}</td>
+                    <td>{{ bits }}</td>
+                    <td>{{ bits | instruction }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="column">
           <div class="box">
             <h2 class="subtitle">RAM</h2>
-            <table id="ram" class="table">
-              <thead>
-                <tr>
-                  <th>Index</th>
-                  <th>Bits</th>
-                  <th>Integer</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(bits, index) in state.ram">
-                  <td>{{ index }}</td>
-                  <td>{{ bits }}</td>
-                  <td>{{ bits | bitsToInt }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style="max-height: 65vh; overflow-y: scroll">
+              <table id="ram" class="table">
+                <thead>
+                  <tr>
+                    <th>Index</th>
+                    <th>Bits</th>
+                    <th>Integer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(bits, index) in state.ram" @click="selectRAM(bits, index)" class="clickable">
+                    <td>{{ index }}</td>
+                    <td>{{ bits }}</td>
+                    <td>{{ bits | bitsToInt }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="column">
           <div class="box">
-            <h2 class="subtitle">State</h2>
+            <h2 class="subtitle">CPU</h2>
             <table id="state" class="table">
               <tbody>
                 <tr>
                   <th>PC</th>
                   <td>{{ state.pc }}</td>
                   <td>{{ state.pc | bitsToInt }}</td>
+                </tr>
+                <tr>
+                  <th>A register</th>
+                  <td>{{ state.aRegister }}</td>
+                  <td>{{ state.aRegister | bitsToInt }}</td>
+                </tr>
+                <tr>
+                  <th>D register</th>
+                  <td>{{ state.dRegister }}</td>
+                  <td>{{ state.dRegister | bitsToInt }}</td>
                 </tr>
               </tbody>
             </table>
@@ -132,12 +164,33 @@
         state: {
           rom: [],
           ram: [],
-          pc: "0000000000000000"
+          pc: "0000000000000000",
+          aRegister: "0000000000000000",
+          dRegister: "0000000000000000"
+        },
+        editRAM: {
+          index: 0,
+          value: "0000000000000000"
+        },
+        error: {
+          items: null,
+          value: null
         }
       },
       computed: {
         shortenedROM: function () {
-          return this.state.rom.filter(value => value !== "0000000000000000")
+          for (let i = this.state.rom.length - 1; true; i--) {
+            if (this.state.rom[i] !== "0000000000000000") {
+              return this.state.rom.slice(0, i + 1)
+            }
+          }
+          return []
+        },
+        shortenedRAM: function () {
+          return this.state.ram.filter(a => a !== '0000000000000000')
+        },
+        pc: function () {
+          return bitsToInt(this.state.pc)
         }
       },
       filters: {
@@ -194,6 +247,26 @@
         reset: function () {
           fetch("/reset").then(response => response.json()).then(state => this.state = state)
         },
+        selectRAM: function (bits, index) {
+          this.editRAM.value = bits
+          this.editRAM.index = index
+        },
+        updateRAM: function () {
+          this.error.items = null
+          this.error.value = null
+          if (this.editRAM.value.length !== 16) {
+            this.error.items = this.editRAM.value.length
+            return
+          }
+          if ([...this.editRAM.value].filter(a => a !== "0" && a !== "1").length > 0) {
+            this.error.value = true
+            return
+          }
+          fetch("/set-ram", {
+            method: "POST",
+            body: JSON.stringify(this.editRAM)
+          }).then(response => response.json()).then(state => this.state = state)
+        }
       }
     })
   </script>

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -10,9 +11,11 @@ import (
 var comp = getComputer(16)
 
 type computerState struct {
-	ROM []string `json:"rom"`
-	RAM []string `json:"ram"`
-	PC  string   `json:"pc"`
+	ROM       []string `json:"rom"`
+	RAM       []string `json:"ram"`
+	PC        string   `json:"pc"`
+	Aregister string   `json:"aRegister"`
+	Dregister string   `json:"dRegister"`
 }
 
 func guiHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,14 +38,34 @@ func resetComputer(w http.ResponseWriter, r *http.Request) {
 }
 
 func setRAM(w http.ResponseWriter, r *http.Request) {
-	// TODO: implement
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 Internal server error"))
+		return
+	}
+	var setram map[string]interface{}
+	err = json.Unmarshal(body, &setram)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 Internal server error"))
+		return
+	}
+	index := setram["index"].(float64)
+	value := setram["value"].(string)
+	comp.data.tick(strToBool(value), intToBools(int(index), 15), true)
+	json.NewEncoder(w).Encode(getState())
 }
 
 func getState() computerState {
 	return computerState{
-		ROM: dumpROM(&comp.program),
-		RAM: dumpRAM(&comp.data),
-		PC:  boolToStr(comp.processor.count.read()),
+		ROM:       dumpROM(&comp.program),
+		RAM:       dumpRAM(&comp.data),
+		PC:        boolToStr(comp.processor.count.read()),
+		Aregister: boolToStr(comp.processor.aRegister.out),
+		Dregister: boolToStr(comp.processor.dRegister.out),
 	}
 }
 
@@ -51,6 +74,7 @@ func main() {
 	http.HandleFunc("/load", loadProgram)
 	http.HandleFunc("/tick", doTick)
 	http.HandleFunc("/reset", resetComputer)
+	http.HandleFunc("/set-ram", setRAM)
 	fmt.Print("Running server")
 	log.Fatal(http.ListenAndServe(":8001", nil))
 }

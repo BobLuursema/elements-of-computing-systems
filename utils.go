@@ -1,11 +1,14 @@
 package main
 
 import (
+	"math"
 	"os"
+	"strings"
 	"testing"
 )
 
 func strToBool(in string) []bool {
+	in = strings.ReplaceAll(in, " ", "")
 	output := make([]bool, len(in))
 	for i, c := range in {
 		output[i] = c == '1'
@@ -27,15 +30,33 @@ func boolToStr(in []bool) string {
 	return output
 }
 
-func assertSlice(output []bool, input []bool, t *testing.T) {
-	if len(input) != len(output) {
+func assertSlice(actual []bool, expected []bool, t *testing.T) {
+	if len(expected) != len(actual) {
 		t.Error("Length is different.")
 	}
-	for index, value := range input {
-		if value != output[index] {
-			t.Errorf("Index %d is different", index)
+	for index, value := range expected {
+		if value != actual[index] {
+			t.Errorf("Actual %s is different from expected %s", boolToStr(actual), boolToStr(expected))
 		}
 	}
+}
+
+func calculateSomething(input int, size int) (int, bool) {
+	output := input / size
+	if output == 0 {
+		return input, false
+	}
+	return input - size, true
+}
+
+func intToBools(input int, bits int) []bool {
+	output := make([]bool, 0)
+	for i := int(math.Pow(2.0, float64(bits-1))); i > 0; i = i / 2 {
+		input2, outputBool := calculateSomething(input, i)
+		input = input2
+		output = append(output, outputBool)
+	}
+	return output
 }
 
 func dump(rom *rom32k, filename string) {

@@ -94,33 +94,33 @@ func TestRAM4K(t *testing.T) {
 
 func TestRAM16K(t *testing.T) {
 	r := getRAM16K(3)
-	result := r.read([]bool{false, false, false, false, false, false, false, true, false, false, false, false, false, true})
-	assertSlice(result, []bool{false, false, false}, t)
-	r.tick([]bool{false, false, true}, []bool{false, false, false, false, false, false, false, true, false, false, false, false, false, true}, true)
-	result = r.read([]bool{false, false, false, false, false, false, false, true, false, false, false, false, false, true})
-	assertSlice(result, []bool{false, false, true}, t)
+	result := r.read(strToBool("00 0000 0100 0001"))
+	assertSlice(result, strToBool("000"), t)
+	r.tick(strToBool("001"), strToBool("00 0000 0100 0001"), true)
+	result = r.read(strToBool("00 0000 0100 0001"))
+	assertSlice(result, strToBool("001"), t)
 }
 
 func TestCounter(t *testing.T) {
-	c := getCounter(3)
+	c := getCounter(4)
 	// Check default
-	assertSlice(c.count.out, []bool{false, false, false}, t)
+	assertSlice(c.count.out, strToBool("000"), t)
 	// Check inc
-	c.tick([]bool{false, true, false}, true, false, false)
-	assertSlice(c.count.out, []bool{false, false, true}, t)
+	c.tick(strToBool("010"), true, false, false)
+	assertSlice(c.count.out, strToBool("001"), t)
 	// check load
-	c.tick([]bool{true, false, false}, false, true, false)
-	assertSlice(c.count.out, []bool{true, false, false}, t)
+	c.tick(strToBool("100"), false, true, false)
+	assertSlice(c.count.out, strToBool("100"), t)
 	// check reset
-	c.tick([]bool{false, true, false}, false, false, true)
-	assertSlice(c.count.out, []bool{false, false, false}, t)
+	c.tick(strToBool("010"), false, false, true)
+	assertSlice(c.count.out, strToBool("000"), t)
 	// check priority
-	c.tick([]bool{false, true, false}, true, true, true)
-	assertSlice(c.count.out, []bool{false, false, false}, t)
-	c.tick([]bool{false, true, false}, true, true, false)
-	assertSlice(c.count.out, []bool{false, true, false}, t)
-	c.tick([]bool{false, true, false}, true, false, false)
-	assertSlice(c.count.out, []bool{false, true, true}, t)
-	c.tick([]bool{false, true, false}, false, false, false)
-	assertSlice(c.count.out, []bool{false, true, true}, t)
+	c.tick(strToBool("010"), true, true, true)
+	assertSlice(c.count.out, strToBool("000"), t)
+	c.tick(strToBool("010"), true, true, false)
+	assertSlice(c.count.out, strToBool("010"), t)
+	c.tick(strToBool("010"), true, false, false)
+	assertSlice(c.count.out, strToBool("011"), t)
+	c.tick(strToBool("010"), false, false, false)
+	assertSlice(c.count.out, strToBool("011"), t)
 }

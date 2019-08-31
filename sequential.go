@@ -242,5 +242,5 @@ func (c *counter) read() []bool {
 }
 
 func getCounter(registerSize int) counter {
-	return counter{zero: make([]bool, registerSize), count: getRegister(registerSize)}
+	return counter{zero: make([]bool, registerSize-1), count: getRegister(registerSize - 1)}
 }
