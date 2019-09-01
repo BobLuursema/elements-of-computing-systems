@@ -28,19 +28,50 @@
 <body>
 
   <div id="app">
-
     <div class="section">
 
       <h1 class="title">HACK computer</h1>
 
       <div class="box">
-        <div class="buttons">
-          <button @click="nextTick" class="button">Next tick</button>
-          <button @click="reset" class="button">Reset</button>
+        <div class="columns">
+
+          <div class="column">
+            <div class="field">
+              <label class="label">Program</label>
+              <div class="select">
+                <select v-model="selectedProgram">
+                  <option v-for="program in programs" :value="program">{{ program }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="column">
+            <div class="buttons">
+              <button @click="nextTick" class="button">Next tick</button>
+              <button v-if="!isRunning" @click="startRunning" class="button">Start running</button>
+              <button v-else @click="stopRunning" class="button">Stop running</button>
+              <button @click="reset" class="button">Reset</button>
+            </div>
+            <p>
+              Operations/second: {{ operationsPerSecond }}
+            </p>
+          </div>
+
+          <div class="column">
+            <div class="field">
+              <label class="label">Ticks per tick</label>
+              <div class="control">
+                <input class="input" type="number" v-model.number="ticksPerTick">
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <div class="columns">
+
         <div class="column">
           <div class="box">
             <h2 class="subtitle">ROM</h2>
@@ -64,6 +95,7 @@
             </div>
           </div>
         </div>
+
         <div class="column">
           <div class="box">
             <h2 class="subtitle">RAM</h2>
@@ -107,6 +139,7 @@
             </div>
           </div>
         </div>
+
         <div class="column">
           <div class="box">
             <h2 class="subtitle">CPU</h2>
@@ -139,10 +172,9 @@
             <div id="keyboard" tabindex="0" @keydown="onKeyDown" @keyup="onKeyUp">{{ pressedKey }}</div>
           </div>
         </div>
+
       </div>
-
     </div>
-
   </div>
 
   <script>
@@ -257,7 +289,27 @@
           }
         },
         ramPage: 0,
-        pressedKey: null
+        pressedKey: null,
+        programs: [],
+        selectedProgram: null,
+        isRunning: false,
+        runningStats: {
+          startTime: null,
+          operationsDone: null,
+        },
+        ticksPerTick: 1
+      },
+      watch: {
+        selectedProgram: function () {
+          this.rom = []
+          fetch(`/load?program=${this.selectedProgram}`).then(response => response.json()).then(response => {
+            this.rom = response.rom;
+            fetch("/reset").then(response => response.json()).then(response => {
+              this.state = response;
+              this.nextFrame()
+            })
+          })
+        }
       },
       computed: {
         visibleRAM: function () {
@@ -276,6 +328,12 @@
         },
         pc: function () {
           return bitsToInt(this.state.pc)
+        },
+        operationsPerSecond: function () {
+          if (this.runningStats.startTime === null || this.runningStats.operationsDone === null) {
+            return 0
+          }
+          return Math.round(this.runningStats.operationsDone / (new Date() - this.runningStats.startTime) * 1000)
         }
       },
       filters: {
@@ -327,15 +385,30 @@
         }
       },
       created: function () {
-        fetch("/load").then(response => response.json()).then(response => {
-          this.rom = response.rom;
-          fetch("/reset").then(response => response.json()).then(state => {
-            this.state = state;
-            this.nextFrame()
-          })
+        fetch("/get-programs").then(response => response.json()).then(response => {
+          this.programs = response.programs
         })
       },
       methods: {
+        startRunning: function () {
+          this.isRunning = true;
+          this.runningStats.startTime = new Date()
+          this.runningStats.operationsDone = 0
+          this.run()
+        },
+        run: function () {
+          if (this.isRunning) {
+            fetch(`/tick?ticks=${this.ticksPerTick}`).then(response => response.json()).then(state => {
+              this.runningStats.operationsDone = this.runningStats.operationsDone + this.ticksPerTick
+              this.state = state;
+              this.run()
+              this.nextFrame()
+            })
+          }
+        },
+        stopRunning: function () {
+          this.isRunning = false
+        },
         nextTick: function () {
           fetch("/tick").then(response => response.json()).then(state => {
             this.state = state;
