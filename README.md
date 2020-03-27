@@ -4,18 +4,29 @@ The Elements of Computing Systems: Building a Modern Computer from First Princip
 
 While reading this book I am implementing all the projects using Go. So in the end I should have a nice simulation of a computer built up starting at a NAND gate.
 
-page 100
+## Starting the computer
+
+The computer can be initiated using `getComputer(16)` from `computer.go`. The computer has functions to control it.
+
+`loadProgram(filePath)` can be used to load a .hack file into ROM.
+`tick(bool)` is used to run one tick of the computer. The bool is the reset switch.
+
+The computer can be controlled using a Vue interface. Start the server by running `go build & ./elements-of-computer-science` and go to `localhost:8001`. In the interface you can specify the amount of ticks to do per HTTP call. My current computer can run up to about 70-75 ops/s by doing 20-30 ticks per call.
+
+## Steps taken
+
+page 127
 file:///home/bob/Downloads/The%20Elements%20of%20Computing%20Systems.pdf
 
-## Step 1: Gates
+### Step 1: Gates
 
 The basic unit is the `nand` function. Using this I have implemented other basic gates: `not`, `and`, `or`, `xor` and `nor`. Using these I have also implementen a `mux` and `dmux`. The multiplexor takes 2 inputs and a selector input, the selector decides whether the gate returns input 1 or input 2. The demultiplexor takes 1 input and a selector input, depending on the selector it returns the input on output channel 1 or 2. These gates are then used to create a `mux4Way`, `mux8way`, `dmux4Way` and `dmux8Way`. All of these gates are implemented using array inputs so that the final computer can be 4-bit, 8-bit and such.
 
-## Step 2: ALU
+### Step 2: ALU
 
 The next units are the `halfAdder` and `fullAdder`. Together with an `add` and `increment` function we have constructed an `alu`. The ALU has 2 multi bit inputs and 6 flags input. The ALU gives multi bit output and two flags, the first flag is whether the output is 0, and the second flag is whether the output is negative.
 
-## Step 3: Sequential
+### Step 3: Sequential
 
 Next up is creating storage. The basic unit is the `dataFlipFlop`, every tick this struct receives an input and sets the `currentValue` equal to the input. The `dataFlipFlop` is used in the `bit`, the `bit` receives two inputs every tick, depending on the load input the input input is stored in the `dataFlipFlop`. A `register` stores an array of `bits`.
 
@@ -23,7 +34,7 @@ The `RAM8` module has 8 `register`s. Every tick it receives an input and load in
 
 Finally there is a special `count` struct. Every tick it takes an input, increment, load and reset. Usually it will receive an increment input which will increase the stored count by one. Otherwise it can take an input and load input to set the count to that input. If the reset input is given the count is set back to zero.
 
-## Step 4: Computer
+### Step 4: Computer
 
 Finally we construct the full computer. This consists of a `CPU` which has a data-register, address-register and a counter. Every tick the cpu receives an instruction input which comes from the assembly code, the input from memory which can be the second input for the ALU, and a reset flag which is passed to the counter.
 

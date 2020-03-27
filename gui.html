@@ -60,9 +60,9 @@
 
           <div class="column">
             <div class="field">
-              <label class="label">Ticks per tick</label>
+              <label class="label">Ticks per call</label>
               <div class="control">
-                <input class="input" type="number" v-model.number="ticksPerTick">
+                <input class="input" type="number" v-model.number="ticksPerCall">
               </div>
             </div>
           </div>
@@ -297,7 +297,7 @@
           startTime: null,
           operationsDone: null,
         },
-        ticksPerTick: 1
+        ticksPerCall: 1
       },
       watch: {
         selectedProgram: function () {
@@ -398,8 +398,8 @@
         },
         run: function () {
           if (this.isRunning) {
-            fetch(`/tick?ticks=${this.ticksPerTick}`).then(response => response.json()).then(state => {
-              this.runningStats.operationsDone = this.runningStats.operationsDone + this.ticksPerTick
+            fetch(`/tick?ticks=${this.ticksPerCall}`).then(response => response.json()).then(state => {
+              this.runningStats.operationsDone = this.runningStats.operationsDone + this.ticksPerCall
               this.state = state;
               this.run()
               this.nextFrame()
